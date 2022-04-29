@@ -164,7 +164,7 @@ int main()
 
     marime = image.getSize();
 
-    sf::RenderWindow window(sf::VideoMode(marime.x, marime.y), "party in iran!");
+    sf::RenderWindow window(sf::VideoMode(marime.x, marime.y), "Party in iran!");
 
     geneare_culori();
 
