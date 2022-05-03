@@ -5,16 +5,29 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <time.h>
-//#include <Vector2.hpp>
 
 using namespace std;
 
-#define NRSOL 3
+#define NRSOL 4
 #define NODES 50
-
 int a[NODES][NODES] = {0}, sol[NRSOL][NODES];
-
 int x[NODES], n, k, nrsol=0, nrtari, coord[2][NODES];
+
+char nume_imagini[3][20] =
+{
+    {"tehran1.png"},
+    {"usa1.png"},
+    {"iran1.png"}
+};
+
+char nume_date[3][20] =
+{
+    {"tehran.in"},
+    {"usa.in"},
+    {"iran.in"}
+};
+
+int nr_harta;
 
 void init()
 {
@@ -22,7 +35,7 @@ void init()
 }
 
 void citire(){
-    ifstream f("iran.in");
+    ifstream f(nume_date[nr_harta]);
     int i, j, x, y, nrvecini, tara, t;
     f >> nrtari;
     n = nrtari;
@@ -33,8 +46,8 @@ void citire(){
         f >> y;
         coord[0][i + 1] = x;
         coord[1][i + 1] = y;
-       //coord[1][i + 1] = y + 5;
         f >> nrvecini;
+
         for (j = 0; j < nrvecini; j++){
             f >> t;
             a[i + 1][t + 1] = 1;
@@ -81,9 +94,13 @@ int solutie()
 void tipar()
 {
     int i;
+    int pc = x[1]; // culoarea primei tari
+    if(sol[pc - 1][1] != 0){
+        return;
+    }
     for (i = 1; i <= n; i++){
         cout << x[i] << " ";
-        sol[nrsol][i] = x[i];
+        sol[pc - 1][i] = x[i];
     }
     cout << endl;
     nrsol++;
@@ -99,12 +116,12 @@ void back()
         do
         {
             as = succesor();
-        } while (as &&! valid());
+        } while (as && !valid());
         if (as)
-            if (solutie() && nrsol < NRSOL)
+            if (solutie() && nrsol < NRSOL) {
                 tipar();
-            else
-            {
+                k = 1; //sare direct
+            } else {
                 k++;
                 init();
             }
@@ -113,13 +130,16 @@ void back()
 }
 
 sf::Image image;
+
 sf::Vector2u marime;
+
 
 void galeata(int x, int y, const sf::Color& c)
 {
 
     sf::Color vechi = image.getPixel(x, y);
     image.setPixel(x, y, c);
+
     if(x > 0 && image.getPixel(x - 1, y) == vechi)
         galeata(x - 1, y, c);
 
@@ -133,10 +153,11 @@ void galeata(int x, int y, const sf::Color& c)
         galeata(x, y + 1, c);
 }
 
+
+
 sf::Color culori[4];
 
 void geneare_culori(){
-    srand(time(NULL));
     for(int i = 1; i <= 4; i++){
         culori[i].r = rand() % 256;
         culori[i].g = rand() % 256;
@@ -147,48 +168,93 @@ void geneare_culori(){
 
 int main()
 {
+    srand(time(NULL));
+
+    cout << "Alegeti o harta din urmatoarele: " << endl;
+    cout << "[1] Tehran\n" << "[2] USA\n" << "[3] Iran\n";
+
+    cin >> nr_harta;
+    if(nr_harta > 3 || nr_harta < 1){
+        cout << "\nAvem doar trei harti la dispozitie, asadar te rog alege din acelea !! \n";
+        return 0;
+    }
+    nr_harta--;
+
     citire();
 
-    cout << "numarul de tari este: " << nrtari << endl;
+    cout << "numarul de tari: " << nrtari << endl;
+
+    int sol_aleasa = rand() % 4;
+    cout <<"solutia aplicata: "<< sol_aleasa + 1 << endl;
+
+    cout << "patru dintre solutiile generate sunt: \n";
+
     back();
-    cout << endl;
-    cout << nrsol << endl;
 
-    afisare_matr();
-    printf("asdasadssda\n");
-    fflush(stdout);
+//    cout << "\nmatricea de adiacenta: \n";
+//    afisare_matr();
 
-
-    if (!(image.loadFromFile("iran1.png")))
+    if (!(image.loadFromFile(nume_imagini[nr_harta])))
             std::cout << "Cannot load image";   //Load Image
 
     marime = image.getSize();
-
-    sf::RenderWindow window(sf::VideoMode(marime.x, marime.y), "Party in iran!");
+    sf::RenderWindow window(sf::VideoMode(marime.x, marime.y), "Harta");
 
     geneare_culori();
 
     for (int i = 1; i <= nrtari; i++){
-        galeata(coord[0][i], coord[1][i], culori[sol[rand() % 3][i]]);
+        galeata(coord[0][i], coord[1][i], culori[sol[sol_aleasa][i]]);
     }
-//
-//    for (int i = 1; i <= nrtari; i++){
-//        for (int ii = 1; ii <= 10; ii++){
-//            for (int jj = 1; jj <= 20; jj++){
-//                image.setPixel(coord[0][i] + ii, coord[1][i] + jj, sf::Color().Black);
-//            }
-//        }
-//    }
+
 
     sf::Texture texture;
-    texture.loadFromImage(image);  //Load Texture from image
+    texture.loadFromImage(image);
 
     sf::Sprite sprite;
     sprite.setTexture(texture);
 
-
     window.draw(sprite);
     window.display();
+
+    // L E G E N D A
+    sf::Image limage;
+    sf::Texture ltexture;
+    sf::Sprite lsprite;
+    sf::Vector2u lmarime;
+
+    if (!(limage.loadFromFile("pergament.png")))
+            std::cout << "Cannot load image";   //Load Image
+
+    ltexture.loadFromImage(limage);
+    lsprite.setTexture(ltexture);
+    lmarime = limage.getSize();
+
+    sf::RenderWindow winLegenda(sf::VideoMode(lmarime.x, lmarime.y), "Legenda");
+    winLegenda.draw(lsprite);
+
+    for(int r = 1; r <= 4; r++){
+        sf::RectangleShape rectangle(sf::Vector2f(25, 25));
+        rectangle.setPosition(25, r*(25+10));
+        rectangle.setFillColor(culori[r]);
+        winLegenda.draw(rectangle);
+
+        sf::Text Text;
+        sf::Font font;
+        std::string stxt = std::to_string(r);
+        Text.setString(stxt);
+
+        if (!font.loadFromFile("Laksaman-Bold.ttf")){
+            cout << "No font.\n";
+            return 1;
+        }
+        Text.setFont(font);
+        Text.setPosition(65, r*(22+10));
+        Text.setCharacterSize(30);
+        Text.setFillColor(sf::Color::Black);
+        winLegenda.draw(Text);
+        }
+
+    winLegenda.display();
 
     while (window.isOpen())
     {
@@ -206,6 +272,7 @@ int main()
             //window.clear();
             window.draw(sprite);
             window.display();
+            usleep(100000);
         }
 
     return 0;
