@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
+
 
 using namespace std;
 
@@ -102,9 +104,22 @@ void tipar()
         cout << x[i] << " ";
         sol[pc - 1][i] = x[i];
     }
-    cout << endl;
+    cout << " !" << endl;
     nrsol++;
 }
+
+void print_sol_partiala()
+{
+  int i;
+  for(i = 1; i <= n; i++){
+    if(i <=k)
+      cout << x[i] << " ";
+    else
+      cout << "*" << " ";
+  }
+  cout << endl; 
+}
+
 
 void back()
 {
@@ -117,6 +132,7 @@ void back()
         {
             as = succesor();
         } while (as && !valid());
+	//print_sol_partiala(); 
         if (as)
             if (solutie() && nrsol < NRSOL) {
                 tipar();
@@ -134,35 +150,64 @@ sf::Image image;
 sf::Vector2u marime;
 
 
-void galeata(int x, int y, const sf::Color& c)
+void galeatat(int x, int y, const sf::Color& c)
 {
 
     sf::Color vechi = image.getPixel(x, y);
     image.setPixel(x, y, c);
 
     if(x > 0 && image.getPixel(x - 1, y) == vechi)
-        galeata(x - 1, y, c);
+      galeatat(x - 1, y, c);
 
     if(y > 0 && image.getPixel(x, y - 1) == vechi)
-        galeata(x, y - 1, c);
+        galeatat(x, y - 1, c);
 
     if(x < marime.x - 1 && image.getPixel(x + 1, y) == vechi)
-        galeata(x + 1, y, c);
+        galeatat(x + 1, y, c);
 
     if(y < marime.y - 1 && image.getPixel(x, y + 1) == vechi)
-        galeata(x, y + 1, c);
+        galeatat(x, y + 1, c);
 }
 
 
 
-sf::Color culori[4];
+void galeata(int x, int y, const sf::Color& c, const sf::Color& bk)
+{
+
+    sf::Color vechi = image.getPixel(x, y);
+    if(c == vechi ||c == bk)
+      return;
+    
+    image.setPixel(x, y, c);
+
+    if(x > 0 && image.getPixel(x - 1, y) == vechi)
+      galeata(x - 1, y, c, bk);
+
+    if(y > 0 && image.getPixel(x, y - 1) == vechi)
+      galeata(x, y - 1, c, bk);
+
+    if(x < marime.x - 1 && image.getPixel(x + 1, y) == vechi)
+      galeata(x + 1, y, c, bk);
+
+    if(y < marime.y - 1 && image.getPixel(x, y + 1) == vechi)
+      galeata(x, y + 1, c, bk);
+}
+
+
+
+sf::Color culori[5], bkgnd = {255, 255, 255, 255};
 
 void geneare_culori(){
+  culori[0].r = 0; 
+  culori[0].g = 0; 
+  culori[0].b = 0; 
+  culori[0].a = 255;
+
     for(int i = 1; i <= 4; i++){
-        culori[i].r = rand() % 256;
-        culori[i].g = rand() % 256;
-        culori[i].b = rand() % 256;
-        culori[i].a = 255;
+      culori[i].r = 100* (i%2); // rand() % 256;
+      culori[i].g = 100* (i%3); //rand() % 256;
+      culori[i].b = 100* (i%4); //rand() % 256;
+      culori[i].a = 255;
     }
 }
 
@@ -184,12 +229,12 @@ int main()
 
     cout << "numarul de tari: " << nrtari << endl;
 
-    int sol_aleasa = rand() % 4;
+    int sol_aleasa = rand() % NRSOL;
     cout <<"solutia aplicata: "<< sol_aleasa + 1 << endl;
 
     cout << "patru dintre solutiile generate sunt: \n";
 
-    back();
+
 
 //    cout << "\nmatricea de adiacenta: \n";
 //    afisare_matr();
@@ -199,13 +244,12 @@ int main()
 
     marime = image.getSize();
     sf::RenderWindow window(sf::VideoMode(marime.x, marime.y), "Harta");
-
+    bkgnd = image.getPixel(0, 0);
+    printf("Bkgnd: %d %d %d %d\n", bkgnd.r, bkgnd.g,bkgnd.b,bkgnd.a);  
+      
     geneare_culori();
 
-    for (int i = 1; i <= nrtari; i++){
-        galeata(coord[0][i], coord[1][i], culori[sol[sol_aleasa][i]]);
-    }
-
+    
 
     sf::Texture texture;
     texture.loadFromImage(image);
@@ -229,6 +273,10 @@ int main()
     lsprite.setTexture(ltexture);
     lmarime = limage.getSize();
 
+    //    for (int i = 1; i <= nrtari; i++)
+    //  galeata(coord[0][i], coord[1][i], culori[0], bkgnd);
+
+    
     sf::RenderWindow winLegenda(sf::VideoMode(lmarime.x, lmarime.y), "Legenda");
     winLegenda.draw(lsprite);
 
@@ -256,24 +304,85 @@ int main()
 
     winLegenda.display();
 
+    // back();
+
+    if(1){ 
+      int as;
+      k = 1;
+      init();
+      while (k > 0){
+	do
+	  {
+	    as = succesor();
+	  } while (as && !valid());
+
+
+	
+	for (int i = 1; i <= nrtari; i++){
+	  if(i <= k){ 
+	    galeata(coord[0][i], coord[1][i], culori[x[i]], bkgnd);
+	  } else { 
+	    galeata(coord[0][i], coord[1][i], culori[0], bkgnd); // negru
+	  }
+	}
+	cout << endl; 
+	print_sol_partiala();
+
+ 	int pressed = 0; 
+	//cin >> aha;
+	while (!pressed && window.isOpen()){
+	  sf::Event event; 
+	  while (!pressed && window.pollEvent(event)){
+	    if (event.type == sf::Event::KeyPressed ||
+		event.type == sf::Event::MouseButtonPressed
+		)
+	      pressed = 1;
+	    usleep(10000);
+	  }
+	  texture.loadFromImage(image);
+	  window.draw(sprite);
+	  window.display();
+	}
+	
+	if (as)
+	  if (solutie() && nrsol < NRSOL) {
+	    tipar();
+	    k = 1; //sare direct
+	  } else {
+	    k++;
+	    init();
+	  }
+	else k--;
+      }
+    } else {
+      back();
+    }
+	
+
+    for (int i = 1; i <= nrtari; i++){
+      //   galeata(coord[0][i], coord[1][i], culori[sol[sol_aleasa][i]], bkgnd);
+    }
+
+    
+    
     while (window.isOpen())
     {
-            sf::Event event;
+      sf::Event event;
 
-            while (window.pollEvent(event))
-            {
-                    if (event.type == sf::Event::Closed)
-                            window.close();
+      while (window.pollEvent(event))
+	{
+	  if (event.type == sf::Event::Closed)
+	    window.close();
 
-                    }//Event handling done
+	}//Event handling done
 
-            texture.loadFromImage(image);
+      texture.loadFromImage(image);
 
-            //window.clear();
-            window.draw(sprite);
-            window.display();
-            usleep(100000);
-        }
+      //window.clear();
+      window.draw(sprite);
+      window.display();
+      usleep(100000);
+    }
 
     return 0;
 }
