@@ -15,6 +15,8 @@ using namespace std;
 int a[NODES][NODES] = {0}, sol[NRSOL][NODES];
 int x[NODES], n, k, nrsol=0, nrtari, coord[2][NODES];
 
+int print_partial = 1; 
+
 char nume_imagini[3][20] =
 {
     {"tehran1.png"},
@@ -108,19 +110,6 @@ void tipar()
     nrsol++;
 }
 
-void print_sol_partiala()
-{
-  int i;
-  for(i = 1; i <= n; i++){
-    if(i <=k)
-      cout << x[i] << " ";
-    else
-      cout << "*" << " ";
-  }
-  cout << endl; 
-}
-
-
 void back()
 {
     int as;
@@ -195,6 +184,7 @@ void galeata(int x, int y, const sf::Color& c, const sf::Color& bk)
 
 
 
+
 sf::Color culori[5], bkgnd = {255, 255, 255, 255};
 
 void geneare_culori(){
@@ -209,6 +199,24 @@ void geneare_culori(){
       culori[i].b = 100* (i%4); //rand() % 256;
       culori[i].a = 255;
     }
+}
+
+
+void print_sol_partiala()
+{
+  for (int i = 1; i <= nrtari; i++){
+    if (i <= k)
+    {
+      cout << x[i] << " ";
+      galeata(coord[0][i], coord[1][i], culori[x[i]], bkgnd);
+    }
+    else
+    {
+      cout << "* ";
+      galeata(coord[0][i], coord[1][i], culori[0], bkgnd); // negru
+    }
+  }
+  cout << endl;
 }
 
 int main()
@@ -306,7 +314,7 @@ int main()
 
     // back();
 
-    if(1){ 
+    
       int as;
       k = 1;
       init();
@@ -316,37 +324,57 @@ int main()
 	    as = succesor();
 	  } while (as && !valid());
 
+    if (print_partial){
+         print_sol_partiala();
+    }
 
-	
-	for (int i = 1; i <= nrtari; i++){
-	  if(i <= k){ 
-	    galeata(coord[0][i], coord[1][i], culori[x[i]], bkgnd);
-	  } else { 
-	    galeata(coord[0][i], coord[1][i], culori[0], bkgnd); // negru
-	  }
-	}
-	cout << endl; 
-	print_sol_partiala();
+  int pressed = 0;
+  while (pressed == 0 && print_partial == 1 && window.isOpen())
+  {
+    sf::Event event;
+    while (pressed == 0 && window.pollEvent(event))
+    {
+      if (event.type == sf::Event::MouseButtonPressed)
+      {
+        pressed = 1;
+        cout << "mouse\n";
+      }
+      if (event.type == sf::Event::KeyPressed)
+      {
+        switch(event.key.code){
+          case sf::Keyboard::Escape:
+                  pressed = 1; 
+                  print_partial = 0; 
+                  break;
+          case sf::Keyboard::Space:
+                  pressed = 1; 
+                  break;
+          default: 
+                  std::cout << "ESC = skip la sfârșit soluție\nSPACE = coorează next" << std::endl;
+                  break;
+        }
+      }
 
- 	int pressed = 0; 
-	//cin >> aha;
-	while (!pressed && window.isOpen()){
-	  sf::Event event; 
-	  while (!pressed && window.pollEvent(event)){
-	    if (event.type == sf::Event::KeyPressed ||
-		event.type == sf::Event::MouseButtonPressed
-		)
-	      pressed = 1;
-	    usleep(10000);
-	  }
-	  texture.loadFromImage(image);
-	  window.draw(sprite);
-	  window.display();
-	}
-	
-	if (as)
+      usleep(10000);
+    }
+    texture.loadFromImage(image);
+    window.draw(sprite);
+    window.display();
+  }
+
+  if (as)
 	  if (solutie() && nrsol < NRSOL) {
 	    tipar();
+      print_partial = 1; 
+      print_sol_partiala();
+      texture.loadFromImage(image);
+      window.draw(sprite);
+      window.display();
+      string aha;
+      cout << "Press ENTER to continue\n";  
+      cin >> aha; 
+      
+
 	    k = 1; //sare direct
 	  } else {
 	    k++;
@@ -354,35 +382,28 @@ int main()
 	  }
 	else k--;
       }
-    } else {
-      back();
-    }
+    
 	
-
-    for (int i = 1; i <= nrtari; i++){
-      //   galeata(coord[0][i], coord[1][i], culori[sol[sol_aleasa][i]], bkgnd);
-    }
-
     
     
-    while (window.isOpen())
-    {
-      sf::Event event;
+  //   while (window.isOpen())
+  //   {
+  //     sf::Event event;
 
-      while (window.pollEvent(event))
-	{
-	  if (event.type == sf::Event::Closed)
-	    window.close();
+  //     while (window.pollEvent(event))
+	// {
+	//   if (event.type == sf::Event::Closed)
+	//     window.close();
 
-	}//Event handling done
+	// }//Event handling done
 
-      texture.loadFromImage(image);
+  //     texture.loadFromImage(image);
 
-      //window.clear();
-      window.draw(sprite);
-      window.display();
-      usleep(100000);
-    }
+  //     //window.clear();
+  //     window.draw(sprite);
+  //     window.display();
+  //     usleep(100000);
+  //   }
 
     return 0;
 }
